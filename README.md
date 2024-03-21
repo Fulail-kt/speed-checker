@@ -25,10 +25,12 @@ The Speed Limit Checker web application allows users to enter a street address, 
 
 1. Clone the repository
 
-    ```bash
-git clone https://github.com/Fulail-kt/speed-checker
+```bash
+
+   git clone https://github.com/Fulail-kt/speed-checker
 
    cd speed-checker
+```
 
 2. Install Dependencies
 

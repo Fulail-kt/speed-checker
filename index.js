@@ -49,7 +49,7 @@ app.post('/calculate', async (req, res) => {
                 res.status(200).json({ message:'Thanks for driving safe!', color: 'green' });
             }
         } else {
-            res.status(200).json({ message: "We don't have speed data for your location. Drive safe anyways!", color: 'yellow' });
+            res.status(200).json({ message: "We don't have speed data for your location. Drive safe anyways!", color: '#becc1f' });
         }
     } catch (error) {
         console.error('Error:', error);

@@ -1,119 +1,87 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Speed Limit Checker</title>
-    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
-<body>
-    <div class="container">
-        <form id="speed-limit-form" action="/calculate" method="POST">
-            <div class="address-section">
-                <label for="address " class="submit">Speed Checker</label>
-                <div class="address-fields">
-                    <div class="input-field">
-                        <label for="street">Street:</label>
-                        <input type="text" id="street" name="street">
-                    </div>
-                    <div class="input-field">
-                        <label for="city">City:</label>
-                        <input type="text" id="city" name="city">
-                    </div>
+
+<body class="bg-gray-900">
+    <div class="w-full flex flex-col justify-center items-center h-screen">
+        <form id="speed_limit_form" onsubmit="speedCheck(event)" class="bg-indigo-500 p-8 rounded-lg shadow-lg" method="POST">
+            <p id="Alert" class="rounded-md m-1 "></p>
+            <div class="w-full justify-evenly gap-x-8 md:flex">
+                <div class="mb-6">
+                    <label for="street" class="block text-white mb-2">Street:</label>
+                    <input type="text" placeholder="ex: 112 7th street" id="street" name="street"
+                        class="w-full px-4 py-2 rounded-lg bg-gray-100 text-gray-900 focus:outline-none focus:bg-white focus:text-gray-900"
+                        required>
                 </div>
-                <div class="address-fields">
-                    <div class="input-field">
-                        <label for="state">State:</label>
-                        <input type="text" id="state" name="state">
-                    </div>
-                    <div class="input-field">
-                        <label for="speed">Speed (MPH):</label>
-                        <input type="number" id="speed" name="speed" required>
-                    </div>
+                <div class="mb-6">
+                    <label for="city" class="block text-white mb-2">City:</label>
+                    <input type="text" placeholder="ex: San Francisco" id="city" name="city"
+                        class="w-full px-4 py-2 rounded-lg bg-gray-100 text-gray-900 focus:outline-none focus:bg-white focus:text-gray-900"
+                        required>
                 </div>
             </div>
-            <div class="submit"><button type="submit">Check Speed Limit</button></div>
+            <div  class="w-full justify-evenly gap-x-8 md:flex">
+                <div class="mb-6">
+                    <label for="state" class="block text-white mb-2">State:</label>
+                    <input type="text" placeholder="ex: CA" id="state" name="state"
+                        class="w-full px-4 py-2 rounded-lg bg-gray-100 text-gray-900 focus:outline-none focus:bg-white focus:text-gray-900"
+                        required>
+                </div>
+                <div class="mb-6">
+                    <label for="speed" class="block text-white mb-2">Speed (MPH):</label>
+                    <input type="number" id="speed" placeholder="0" name="speed"
+                        class="w-full px-4 py-2 rounded-lg bg-gray-100 text-gray-900 focus:outline-none focus:bg-white focus:text-gray-900"
+                        required>
+                </div>
+            </div>
+            <div class="submit">
+                <button type="submit"
+                    class="w-full bg-indigo-700 hover:bg-indigo-800 text-white font-bold py-2 px-4 rounded">
+                    Check Speed Limit
+                </button>
+            </div>
         </form>
     </div>
+
+    <script>
+        async function speedCheck(event) {
+            event.preventDefault();
+
+            const formData = new FormData(document.getElementById('speed_limit_form'));
+            const street = formData.get('street');
+            const city = formData.get('city');
+            const state = formData.get('state');
+            const speed = formData.get('speed');
+            const response = await fetch('/calculate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ street, city, state, speed })
+            });
+
+            if (response.ok) {
+
+                const data = await response.json();
+                const message = document.getElementById('Alert');
+                message.textContent = data.message;
+                message.style.backgroundColor = data.color;
+                message.style.color='white'
+                message.style.padding ='10px'
+                message.style.margin="3px"
+                message.style.textAlign="center"
+
+            } else {
+                console.error('Failed', response.statusText);
+            }
+        }
+    </script>
 </body>
+
 </html>
-
-<style>
-
-    body{
-        background-color: #1b1b1b;
-    }
-
-    .container {
-    display: flex;
-    width: 95vw;
-    height: 90vh;
-    justify-content: center;
-    align-items: center;
-    align-content: center;
-}
-
-#speed-limit-form {
-    background-color: rgb(125, 125, 245);
-    padding: 5rem;
-    border-radius: 10px;
-    color: aliceblue;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
-
-.submit{
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    font-weight: 500;
-    font-size: large;
-    letter-spacing: 2px;
-    margin: 3px;
-}
-
-.address-section {
-    margin-bottom: 1rem;
-}
-
-.address-fields {
-    display: flex;
-    justify-content: space-between;
-}
-
-.input-field {
-    width: 48%; 
-}
-
-.input-field label {
-    display: block;
-    margin-bottom: 0.5rem;
-}
-
-.input-field input {
-    width: 100%;
-    padding: 0.5rem;
-    border-radius: 5px;
-    border: 1px solid #ccc;
-    box-sizing: border-box;
-    margin-bottom: 1rem;
-}
-
-.speed-section {
-    margin-bottom: 1rem;
-}
-
-button {
-    background-color: rgb(79, 79, 190);
-    color: white;
-    padding: 0.5rem 1rem;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
-
-button:hover {
-    background-color: rgb(26, 26, 41);
-}
-
-</style>

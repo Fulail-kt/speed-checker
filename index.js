@@ -10,79 +10,76 @@ const app = express()
 const __dirname = path.dirname(new URL(import.meta.url).pathname);
 
 app.set('view engine', 'ejs');
+app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }));
 
-app.use(express.static(path.join(__dirname, 'public')))
 
 app.get('/', (req, res) => {
     res.render('home')
 })
 
 app.post('/calculate', async (req, res) => {
-    const speedLimits = [];
-    const { street, city, state } = req.body;
-    const speed = parseInt(req.body.speed);
-    const response = await axios.get(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(street, city, state)}`);
+
+    const { street, city, state, speed } = req.body;
+
+    console.log(req.body)
+
+    const address = `${street}, ${city}, ${state}`;
+
+    try {
+        const response = await axios.get(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`);
+
+        if (response.data.length > 0 && response.data[0].display_name.includes('San Francisco')) {
+          
+            const speedLimits = await readSpeedLimits();
+
+            
+            const st=street.split(" ")
+            
+            const streetName=st[1]
+            
+            const entry = speedLimits.find(limit => limit.street == streetName);
+        
+            const speedLimit = entry ? (entry.speedLimit === 0 ? 25 : entry.speedLimit) : 25;
+
+            if (speed > speedLimit) {
+                res.status(200).json({ message:'You are above the speed limit! Please slow down and drive safely!', color: 'red' });
+            } else {
+                res.status(200).json({ message:'Thanks for driving safe!', color: 'green' });
+            }
+        } else {
+            res.status(200).json({ message: "We don't have speed data for your location. Drive safe anyways!", color: 'yellow' });
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        res.status(500).json({ message: 'Internal Server Error' });
+    }
+});
 
 
-    if (response.data[0].display_name.includes('San Francisco')) {
-        console.log('The location is within San Francisco.');
-
-        await new Promise((resolve, reject) => {
-            fs.createReadStream('./speedLimits.csv').pipe(csv()).on('data', (row) => {
-                const speedLimit = parseInt(row['SPEEDLIMIT']);
+// to check the speed limits
+async function readSpeedLimits() {
+    return new Promise((resolve, reject) => {
+        const speedLimits = [];
+        fs.createReadStream('./speedLimits.csv').pipe(csv()).on('data', (row) => {
+                const speedLimit = parseInt(row['SPEEDLIMIT']) || 0;
                 const street = row['STREET'];
                 const fromSt = row['FROM_ST'];
                 const toSt = row['TO_ST'];
 
-                streetName = streetName.replace('street', '').trim();
-
-                const speedLimitObj = {
-                    speedLimit,
-                    street,
-                    fromSt,
-                    toSt,
-                };
-
-                speedLimits.push(speedLimitObj);
-
-
-            }).on('end', () => {
-                console.log('CSV file successfully processed');
-                resolve();
-            }).on('error', (error) => {
+                speedLimits.push({ speedLimit, street, fromSt, toSt });
+            })
+            .on('end', () => {
+            console.log('csv processed')
+                resolve(speedLimits);
+            })
+            .on('error', (error) => {
+                console.error("some err while csv reading",error)
                 reject(error);
             });
-
-
-        });
-
-        // const addressParts = address.split(', ');
-        // const street = address[1]
-        // console.log(addressParts)
-
-        // setTimeout(()=>{
-        const entry = speedLimits.find(limit => {
-            if (limit.street == streetName) {
-                console.log(limit)
-            }
-        });
-
-        // },500)
-
-
-        console.log(entry, "ddd")
-
-    } else {
-        console.log('The location is not within San Francisco.');
-    }
-
-
-
-    res.json(speedLimits)
-
-})
+    });
+}
 
 app.listen(3001, () => {
 
